@@ -1,0 +1,82 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Interpolation">
+		<canvas class="canvas"></canvas>
+</Layout>
+
+<script>
+	const canvas = document.querySelector('.canvas');
+	canvas.width = window.innerWidth;
+	canvas.height  = window.innerHeight;
+	const ctx = canvas.getContext('2d');
+
+	const A = {
+		x: 	200,
+		y:  200
+	};
+	const B = {
+		x: 	500,
+		y: 	100
+	};
+
+	const C = lerp(A, B, -0.2);
+
+	function lerp(v1, v2, t) {
+		return {
+			x: v1.x + (v2.x - v1.x) * t,
+			y: v1.y + (v2.y - v1.y) * t
+		}
+	}
+
+	function drawDot(v,label) {
+		ctx.beginPath()
+		ctx.fillStyle = 'white';
+		ctx.strokeStyle = 'greenyellow';
+		ctx.strokowWidth = 5;
+		ctx.arc(v.x, v.y, 10, 0, Math.PI*2, true);
+
+		ctx.fill();
+		ctx.stroke();
+		ctx.fillStyle = 'black';
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.font = 'bold 10px Arial';
+		ctx.fillText(label, v.x, v.y);
+	}
+
+	function animate(){
+		ctx.clearRect(0,0,canvas.width,canvas.height);
+		const sec = new Date().getTime() / 1000;
+		const t = sec - Math.floor(sec);
+		console.log(t);
+		const C = lerp(A, B, t);
+		drawDot(C,'');
+		drawDot(A,'A');
+		drawDot(B,'B');
+		requestAnimationFrame(animate);
+	}
+
+	const n = 10;
+	for(let i=0;i<=n-1;i++){
+		const t = i / n;
+		const v = lerp(A, B, t);
+		drawDot(v, t);
+	}
+
+	
+	/* drawDot(C,'C'); */
+	animate();
+	
+	
+
+</script>
+
+<style>
+	.canvas {
+		outline: 1px solid greenyellow;
+		overflow: hidden;
+	}
+</style>
+
+
