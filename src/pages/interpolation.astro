@@ -7,10 +7,17 @@ import Layout from '../layouts/Layout.astro';
 
 <script>
 	const canvas = document.querySelector('.canvas');
-	canvas.width = window.innerWidth;
-	canvas.height  = window.innerHeight;
-	const ctx = canvas.getContext('2d');
-
+	const bluviolet = {
+		r: 39,
+		g: 31,
+		b: 110
+	};
+	const PaleGoldenRod = {
+		r: 238,
+		g: 232,
+		b: 170
+	};
+	
 	const A = {
 		x: 	200,
 		y:  200
@@ -19,22 +26,45 @@ import Layout from '../layouts/Layout.astro';
 		x: 	500,
 		y: 	100
 	};
+	const lowFrequency = 200;
+	const highFrequency = 400;
 
-	const C = lerp(A, B, -0.2);
+	canvas.width = window.innerWidth;
+	canvas.height  = window.innerHeight;
+	const ctx = canvas.getContext('2d');
+	let audioContext = null;
+	let oscilator = null;
 
-	function lerp(v1, v2, t) {
-		return {
-			x: v1.x + (v2.x - v1.x) * t,
-			y: v1.y + (v2.y - v1.y) * t
+	
+	
+	canvas.addEventListener('click', function() {
+		if (!audioContext) {
+			audioContext = new (AudioContext || webkitAudioContext || window.webkitAudioContext)();
+			oscilator = audioContext.createOscillator();
+			oscilator.frequency.value = 500;
+			oscilator.start();
+
+			const node = audioContext.createGain();
+			node.gain.value = 0.5;
+			oscilator.connect(node);
+			node.connect(audioContext.destination);	
+		}else {
+			
+			oscilator.disconnect();
+			oscilator.stop();
+			audioContext = null;
+			oscilator = null;
+
 		}
-	}
+	});
 
+	
 	function drawDot(v,label) {
-		ctx.beginPath()
+		ctx.beginPath();
 		ctx.fillStyle = 'white';
 		ctx.strokeStyle = 'greenyellow';
 		ctx.strokowWidth = 5;
-		ctx.arc(v.x, v.y, 10, 0, Math.PI*2, true);
+		ctx.arc(v.x, v.y, 15, 0, Math.PI*2, true);
 
 		ctx.fill();
 		ctx.stroke();
@@ -46,26 +76,57 @@ import Layout from '../layouts/Layout.astro';
 	}
 
 	function animate(){
+		
 		ctx.clearRect(0,0,canvas.width,canvas.height);
+		
 		const sec = new Date().getTime() / 1000;
-		const t = sec - Math.floor(sec);
-		console.log(t);
-		const C = lerp(A, B, t);
-		drawDot(C,'');
+		const t = (Math.sin(sec*Math.PI) + 1) / 2;//sec - Math.floor(sec);
+		
+		const C = vLerpV2(A, B, t);
+		drawDot(C,'lerp');
 		drawDot(A,'A');
 		drawDot(B,'B');
+
+		//interpolate colors
+		//canvas.style.backgroundColor = `rgb(${blue.r},${blue.g},${blue.b})`;
+
+		const color = vLerpV2(bluviolet, PaleGoldenRod, t);
+		//console.log(color);
+		canvas.style.backgroundColor = `rgba(${color.r},${color.g},${color.b},0.8)`;
+
+		if (oscilator) {
+			oscilator.frequency.value = lerp(lowFrequency, highFrequency, t);
+		}
+
+		ctx.strokeStyle = 'lemonchiffon';
+		ctx.setLineDash([lerp(4, 20, t), lerp(3, 70, t)]);
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'top';
+		ctx.font = 'bold 40px Arial';
+		ctx.strokeText('Click for sound', canvas.width/2, 10);
+		
+		ctx.fillStyle = `rgba(70,59,161,${lerp(0, 0.8, t)})`;
+		ctx.fillText('Click for sound', canvas.width/2, 10);
+		ctx.setLineDash([]);
+
 		requestAnimationFrame(animate);
 	}
 
-	const n = 10;
-	for(let i=0;i<=n-1;i++){
-		const t = i / n;
-		const v = lerp(A, B, t);
-		drawDot(v, t);
+	function lerp(a,b,t) {
+		return a + (b - a) * t;
+	}
+
+	function vLerpV2(A,B,t) {
+		const res = {};
+
+		for(let k in A) {
+			res[k] = lerp(A[k], B[k], t);
+		}
+
+		return res;
 	}
 
 	
-	/* drawDot(C,'C'); */
 	animate();
 	
 	
