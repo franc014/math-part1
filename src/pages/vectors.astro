@@ -7,7 +7,7 @@ import Layout from '../layouts/Layout.astro';
 
 <style>
   .canvas {
-    background-color: hsla(17, 40%, 74%);
+    background-color: hsla(190, 80%, 10%);
   }
 </style>
 
@@ -29,7 +29,7 @@ import Layout from '../layouts/Layout.astro';
 
   ctx.translate(offset.x, offset.y);
 
-
+  updateCoords();
   canvas.addEventListener('mousemove', (e) => {
    A.x = e.x - offset.x;
    A.y = e.y - offset.y;
@@ -43,8 +43,6 @@ import Layout from '../layouts/Layout.astro';
   drawCoordinateSystem();
   drawPoint(A.x, A.y,10, 'purple');
 
-
-
   function drawCoordinateSystem() {  
     ctx.beginPath();
     ctx.moveTo(-offset.x, 0);
@@ -52,32 +50,82 @@ import Layout from '../layouts/Layout.astro';
     ctx.moveTo(0, -offset.y);
     ctx.lineTo(0,canvas.height - offset.y);
     //line dash
-    ctx.setLineDash([2, 2]);
-    ctx.strokeStyle = 'darkpurple';
+    ctx.setLineDash([12, 2]);
+    ctx.strokeStyle = 'hsl(190, 10%, 50%)';
     ctx.stroke();
     ctx.setLineDash([]);
+    ctx.closePath();
+   
   }
 
   function drawPoint(x, y, r=10 , color) {
     
     ctx.beginPath();
-    ctx.arc(x, y, r/2, 0, 2 * Math.PI);
+    
     ctx.fillStyle = color;
+    ctx.arc(x, y, r/2, 0, 2 * Math.PI);
     ctx.fill();
-
+    ctx.closePath();
   }
 
   function updateCoords() {
-    ctx.clearRect(-offset.x, -offset.y, canvas.width, canvas.height);
+    ctx.clearRect(-offset.x,-offset.y,
+      canvas.width,canvas.height);
     drawCoordinateSystem();
-    drawPoint(A.x, A.y, 20,'purple');
+    //drawPoint(A.x, A.y, 20,'purple');
     const polar = toPolar(A);
 
     console.log(polar);
 
     const cartesian = toCartesian(polar);
     console.log({cartesian});
-    drawPoint(cartesian.x, cartesian.y, 8,'lightblue');
+    //drawPoint(cartesian.x, cartesian.y, 8,'lightblue');
+   
+    drawArrow(A);
+    
+  }
+
+  function sum(A,B){
+    return {
+      x: A.x + B.x,
+      y: A.y + B.y
+    }
+  }
+
+  function drawArrow(tip) {
+    const {direction} = toPolar(tip);
+    const v1 = {
+      direction: direction + Math.PI * 0.8,
+      magnitude: 15
+    };
+    const v2 = {
+      direction: direction - Math.PI * 0.8,
+      magnitude: 15
+    };
+
+
+    const R = toCartesian(v1);
+    const S = toCartesian(v2);
+    const t1 = sum(tip, R);
+    const t2 = sum(tip, S);
+
+    
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(tip.x,tip.y);   
+    ctx.strokeStyle = 'hsl(90, 80%, 40%)';
+    ctx.stroke();
+   
+    ctx.closePath();
+
+    ctx.beginPath();
+    ctx.moveTo(tip.x,tip.y);
+    ctx.lineTo(t1.x,t1.y);
+    ctx.lineTo(t2.x,t2.y);
+    
+    ctx.fillStyle = 'hsl(90, 80%, 40%)';
+    ctx.fill();
+    ctx.closePath();
     
   }
   
@@ -90,7 +138,6 @@ import Layout from '../layouts/Layout.astro';
 
   function toPolar({x,y}) {
 
-    console.log({x,y});
     return {
       magnitude: magnitude({x,y}),
       direction: direction({x,y})
