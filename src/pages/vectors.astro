@@ -22,6 +22,11 @@ import Layout from '../layouts/Layout.astro';
     y:  120
   };
 
+  let G = {
+    x: 	-40,
+    y: 	90
+  };
+
   const offset = {
     x: canvas.width / 2,
     y: canvas.height / 2
@@ -81,7 +86,27 @@ import Layout from '../layouts/Layout.astro';
     console.log({cartesian});
     //drawPoint(cartesian.x, cartesian.y, 8,'lightblue');
    
-    drawArrow(A);
+    drawArrow({x:0,y:0},A);
+    drawArrow({x:0,y:0},G);
+    const SUM = sum(A,G);
+    const SUBS = subtract(A,G);
+    drawArrow({x:0,y:0},SUM);
+    drawArrow({x:0,y:0},SUBS,'hsl(19, 50%, 80%)');
+    
+
+    ctx.beginPath();
+    ctx.moveTo(A.x,A.y);
+    ctx.lineTo(SUM.x,SUM.y);
+    ctx.lineTo(G.x,G.y);
+    ctx.setLineDash([8, 2]);
+    ctx.strokeStyle = 'hsl(190, 80%, 40%)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.closePath();
+
+
+    /* drawArrow(A,sum(A,G),'hsl(190, 80%, 40%)');
+    drawArrow(G,sum(A,G),'hsl(190, 80%, 40%)'); */
     
   }
 
@@ -92,12 +117,21 @@ import Layout from '../layouts/Layout.astro';
     }
   }
 
-  function drawArrow(tip) {
-    const {direction} = toPolar(tip);
+  function subtract(A,B){
+    return {
+      x: A.x - B.x,
+      y: A.y - B.y
+    }
+  }
+
+  function drawArrow(tail,tip,color='hsl(90, 80%, 40%)') {
+    const {direction} = toPolar(subtract(tip, tail));
+
     const v1 = {
       direction: direction + Math.PI * 0.8,
       magnitude: 15
     };
+
     const v2 = {
       direction: direction - Math.PI * 0.8,
       magnitude: 15
@@ -111,19 +145,20 @@ import Layout from '../layouts/Layout.astro';
 
     
     ctx.beginPath();
-    ctx.moveTo(0,0);
+    ctx.moveTo(tail.x,tail.y);
     ctx.lineTo(tip.x,tip.y);   
-    ctx.strokeStyle = 'hsl(90, 80%, 40%)';
+    ctx.strokeStyle = color;
     ctx.stroke();
    
     ctx.closePath();
 
+    //draw arrow
     ctx.beginPath();
     ctx.moveTo(tip.x,tip.y);
     ctx.lineTo(t1.x,t1.y);
     ctx.lineTo(t2.x,t2.y);
     
-    ctx.fillStyle = 'hsl(90, 80%, 40%)';
+    ctx.fillStyle = color;
     ctx.fill();
     ctx.closePath();
     
