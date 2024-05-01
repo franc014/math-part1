@@ -1,0 +1,221 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Vectors">
+    <canvas class="canvas"></canvas>
+</Layout>
+
+<style>
+  .canvas {
+    background-color: hsla(190, 80%, 10%);
+  }
+</style>
+
+<script>
+  const canvas = document.querySelector('.canvas');
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+	canvas.height  = window.innerHeight;
+
+  let A = {
+    x: 	90,
+    y:  120
+  };
+
+  let G = {
+    x: 	-40,
+    y: 	90
+  };
+
+  const offset = {
+    x: canvas.width / 2,
+    y: canvas.height / 2
+  };
+
+  ctx.translate(offset.x, offset.y);
+
+  updateCoords();
+  canvas.addEventListener('mousemove', (e) => {
+   A.x = e.x - offset.x;
+   A.y = e.y - offset.y;
+
+   updateCoords();
+  })
+
+
+ 
+
+  drawCoordinateSystem();
+  drawPoint(A.x, A.y,10, 'purple');
+
+  function drawCoordinateSystem() {  
+    ctx.beginPath();
+    ctx.moveTo(-offset.x, 0);
+    ctx.lineTo(canvas.width - offset.x, 0);
+    ctx.moveTo(0, -offset.y);
+    ctx.lineTo(0,canvas.height - offset.y);
+    //line dash
+    ctx.setLineDash([12, 2]);
+    ctx.strokeStyle = 'hsl(190, 10%, 50%)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.closePath();
+   
+  }
+
+  function drawPoint(x, y, r=10 , color) {
+    
+    ctx.beginPath();
+    
+    ctx.fillStyle = color;
+    ctx.arc(x, y, r/2, 0, 2 * Math.PI);
+    ctx.fill();
+    ctx.closePath();
+  }
+
+  function updateCoords() {
+    ctx.clearRect(-offset.x,-offset.y,
+      canvas.width,canvas.height);
+    drawCoordinateSystem();
+    //drawPoint(A.x, A.y, 20,'purple');
+    const polar = toPolar(A);
+
+    console.log(polar);
+
+    const cartesian = toCartesian(polar);
+    console.log({cartesian});
+    //drawPoint(cartesian.x, cartesian.y, 8,'lightblue');
+   
+    drawArrow({x:0,y:0},A);
+    drawArrow({x:0,y:0},G);
+    const SUM = sum(A,G);
+    const SUBS = subtract(A,G);
+    drawArrow({x:0,y:0},SUM);
+    drawArrow({x:0,y:0},SUBS,'hsl(19, 50%, 80%)');
+    
+
+    //draw paralelogram
+    ctx.beginPath();
+    ctx.moveTo(A.x,A.y);
+    ctx.lineTo(SUM.x,SUM.y);
+    ctx.lineTo(G.x,G.y);
+    ctx.setLineDash([8, 2]);
+    ctx.strokeStyle = 'hsl(190, 80%, 40%)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.closePath();
+
+    //scale
+    const scaled = scale(normalize(SUBS),100);
+
+    drawArrow({x:0,y:0},scaled,'hsl(10, 80%, 40%)');
+
+    //dot
+    //With Math.acos() we can get the angle between two vectors and use 
+    //the dot product to get the value needed for the function
+    console.log(Math.acos(dot(normalize(A), normalize(G))));
+
+
+
+
+    /* drawArrow(A,sum(A,G),'hsl(190, 80%, 40%)');
+    drawArrow(G,sum(A,G),'hsl(190, 80%, 40%)'); */
+    
+  }
+
+  function dot(A,B){
+    return A.x * B.x + A.y * B.y;
+  }
+
+  function scale(A, s){
+    return {
+      x: A.x * s,
+      y: A.y * s
+    }
+  }
+
+  function normalize(p){
+    return scale(p,1/magnitude(p));
+  }
+
+  function sum(A,B){
+    return {
+      x: A.x + B.x,
+      y: A.y + B.y
+    }
+  }
+
+  function subtract(A,B){
+    return {
+      x: A.x - B.x,
+      y: A.y - B.y
+    }
+  }
+
+  function drawArrow(tail,tip,color='hsl(90, 80%, 40%)') {
+    const {direction} = toPolar(subtract(tip, tail));
+
+    const v1 = {
+      direction: direction + Math.PI * 0.8,
+      magnitude: 15
+    };
+
+    const v2 = {
+      direction: direction - Math.PI * 0.8,
+      magnitude: 15
+    };
+
+
+    const R = toCartesian(v1);
+    const S = toCartesian(v2);
+    const t1 = sum(tip, R);
+    const t2 = sum(tip, S);
+
+    
+    ctx.beginPath();
+    ctx.moveTo(tail.x,tail.y);
+    ctx.lineTo(tip.x,tip.y);   
+    ctx.strokeStyle = color;
+    ctx.stroke();
+   
+    ctx.closePath();
+
+    //draw arrow
+    ctx.beginPath();
+    ctx.moveTo(tip.x,tip.y);
+    ctx.lineTo(t1.x,t1.y);
+    ctx.lineTo(t2.x,t2.y);
+    
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.closePath();
+    
+  }
+  
+  function toCartesian({magnitude,direction}) {
+    return {
+      x: magnitude * Math.cos(direction),
+      y: magnitude * Math.sin(direction)
+    }
+  }
+
+  function toPolar({x,y}) {
+
+    return {
+      magnitude: magnitude({x,y}),
+      direction: direction({x,y})
+    }
+  };
+
+  function magnitude({x,y}) {
+    return Math.hypot(x, y);
+  }
+
+  function direction({x,y}) {
+    return Math.atan2( y, x );
+    //return Math.atan( y / x );
+  }
+  
+  
+</script>
+
