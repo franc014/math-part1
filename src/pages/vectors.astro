@@ -110,10 +110,21 @@ import Layout from '../layouts/Layout.astro';
 
     drawArrow({x:0,y:0},scaled,'hsl(10, 80%, 40%)');
 
+    //dot
+    //With Math.acos() we can get the angle between two vectors and use 
+    //the dot product to get the value needed for the function
+    console.log(Math.acos(dot(normalize(A), normalize(G))));
+
+
+
 
     /* drawArrow(A,sum(A,G),'hsl(190, 80%, 40%)');
     drawArrow(G,sum(A,G),'hsl(190, 80%, 40%)'); */
     
+  }
+
+  function dot(A,B){
+    return A.x * B.x + A.y * B.y;
   }
 
   function scale(A, s){
