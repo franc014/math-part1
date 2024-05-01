@@ -18,35 +18,41 @@ import Layout from '../layouts/Layout.astro';
 	canvas.height  = window.innerHeight;
 
   let A = {
+    x: 	0,
+    y:  0
+  };
+
+  let B = {
     x: 	90,
-    y:  120
+    y: 	120
   };
 
-  let G = {
-    x: 	-40,
-    y: 	90
+  let C = {
+    x: 	B.x,
+    y: 	0
   };
 
+  //offset coordinates
   const offset = {
     x: canvas.width / 2,
     y: canvas.height / 2
   };
-
+ 
+  //set canvas in the middle
   ctx.translate(offset.x, offset.y);
 
-  updateCoords();
+  update();
   canvas.addEventListener('mousemove', (e) => {
-   A.x = e.x - offset.x;
-   A.y = e.y - offset.y;
+   B.x = e.x - offset.x;
+   B.y = e.y - offset.y;
+   C.x = B.x; 
 
-   updateCoords();
+
+   update();
   })
 
-
- 
-
   drawCoordinateSystem();
-  drawPoint(A.x, A.y,10, 'purple');
+ 
 
   function drawCoordinateSystem() {  
     ctx.beginPath();
@@ -71,151 +77,71 @@ import Layout from '../layouts/Layout.astro';
     ctx.arc(x, y, r/2, 0, 2 * Math.PI);
     ctx.fill();
     ctx.closePath();
+    
+    
   }
 
-  function updateCoords() {
+  function drawText({x, y}, label, color='black') {
+    ctx.fillStyle = color;
+		ctx.textAlign = 'center';
+		ctx.textBaseline = 'middle';
+		ctx.font = 'bold 30px Courier';
+		ctx.fillText(label, x,y);
+    ctx.strokeStyle = 'white';
+    ctx.lineWidth =1;
+    ctx.strokeText(label, x,y);
+    ctx.closePath();
+  }
+
+  function update() {
+    const c = distance(A,B);
+    const b = distance(A,C);
+    const a = distance(B,C);
+
     ctx.clearRect(-offset.x,-offset.y,
       canvas.width,canvas.height);
     drawCoordinateSystem();
-    //drawPoint(A.x, A.y, 20,'purple');
-    const polar = toPolar(A);
-
-    console.log(polar);
-
-    const cartesian = toCartesian(polar);
-    console.log({cartesian});
-    //drawPoint(cartesian.x, cartesian.y, 8,'lightblue');
    
-    drawArrow({x:0,y:0},A);
-    drawArrow({x:0,y:0},G);
-    const SUM = sum(A,G);
-    const SUBS = subtract(A,G);
-    drawArrow({x:0,y:0},SUM);
-    drawArrow({x:0,y:0},SUBS,'hsl(19, 50%, 80%)');
-    
+    drawLine(A,B, 'hsl(190, 10%, 50%)');
+    drawText(average(A,B),'c','black');
+    drawLine(A,C, 'hsl(19, 50%, 80%)');
+    drawText(average(A,C),'b','black');
+    drawLine(C,B, 'hsl(19, 50%, 80%)');
+    drawText(average(B,C),'a','black');
 
-    //draw paralelogram
+    /* drawPoint(A.x, A.y,30, 'hsl(219, 70%, 80%)');
+    drawText(A, 'A');
+
+    drawPoint(B.x, B.y,30, 'lightblue');
+    drawText(B, 'B');
+
+    drawPoint(C.x, C.y,30, 'lightgreen');
+    drawText(C, 'C'); */
+  }
+
+  function distance(p1, p2) {
+    const dx = p1.x - p2.x;
+    const dy = p1.y - p2.y;
+    return Math.hypot(dx, dy);
+  }
+
+  function average(p1, p2) {
+    return {
+      x: (p1.x + p2.x) / 2,
+      y: (p1.y + p2.y) / 2
+    }
+  }
+
+  function drawLine(p1, p2, color) {
     ctx.beginPath();
-    ctx.moveTo(A.x,A.y);
-    ctx.lineTo(SUM.x,SUM.y);
-    ctx.lineTo(G.x,G.y);
-    ctx.setLineDash([8, 2]);
-    ctx.strokeStyle = 'hsl(190, 80%, 40%)';
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.closePath();
-
-    //scale
-    const scaled = scale(normalize(SUBS),100);
-
-    drawArrow({x:0,y:0},scaled,'hsl(10, 80%, 40%)');
-
-    //dot
-    //With Math.acos() we can get the angle between two vectors and use 
-    //the dot product to get the value needed for the function
-    console.log(Math.acos(dot(normalize(A), normalize(G))));
-
-
-
-
-    /* drawArrow(A,sum(A,G),'hsl(190, 80%, 40%)');
-    drawArrow(G,sum(A,G),'hsl(190, 80%, 40%)'); */
-    
-  }
-
-  function dot(A,B){
-    return A.x * B.x + A.y * B.y;
-  }
-
-  function scale(A, s){
-    return {
-      x: A.x * s,
-      y: A.y * s
-    }
-  }
-
-  function normalize(p){
-    return scale(p,1/magnitude(p));
-  }
-
-  function sum(A,B){
-    return {
-      x: A.x + B.x,
-      y: A.y + B.y
-    }
-  }
-
-  function subtract(A,B){
-    return {
-      x: A.x - B.x,
-      y: A.y - B.y
-    }
-  }
-
-  function drawArrow(tail,tip,color='hsl(90, 80%, 40%)') {
-    const {direction} = toPolar(subtract(tip, tail));
-
-    const v1 = {
-      direction: direction + Math.PI * 0.8,
-      magnitude: 15
-    };
-
-    const v2 = {
-      direction: direction - Math.PI * 0.8,
-      magnitude: 15
-    };
-
-
-    const R = toCartesian(v1);
-    const S = toCartesian(v2);
-    const t1 = sum(tip, R);
-    const t2 = sum(tip, S);
-
-    
-    ctx.beginPath();
-    ctx.moveTo(tail.x,tail.y);
-    ctx.lineTo(tip.x,tip.y);   
     ctx.strokeStyle = color;
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.lineWidth = 2;
     ctx.stroke();
-   
     ctx.closePath();
-
-    //draw arrow
-    ctx.beginPath();
-    ctx.moveTo(tip.x,tip.y);
-    ctx.lineTo(t1.x,t1.y);
-    ctx.lineTo(t2.x,t2.y);
-    
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.closePath();
-    
-  }
-  
-  function toCartesian({magnitude,direction}) {
-    return {
-      x: magnitude * Math.cos(direction),
-      y: magnitude * Math.sin(direction)
-    }
   }
 
-  function toPolar({x,y}) {
-
-    return {
-      magnitude: magnitude({x,y}),
-      direction: direction({x,y})
-    }
-  };
-
-  function magnitude({x,y}) {
-    return Math.hypot(x, y);
-  }
-
-  function direction({x,y}) {
-    return Math.atan2( y, x );
-    //return Math.atan( y / x );
-  }
-  
-  
+ 
 </script>
 
