@@ -94,6 +94,7 @@ import Layout from '../layouts/Layout.astro';
     drawArrow({x:0,y:0},SUBS,'hsl(19, 50%, 80%)');
     
 
+    //draw paralelogram
     ctx.beginPath();
     ctx.moveTo(A.x,A.y);
     ctx.lineTo(SUM.x,SUM.y);
@@ -104,10 +105,26 @@ import Layout from '../layouts/Layout.astro';
     ctx.setLineDash([]);
     ctx.closePath();
 
+    //scale
+    const scaled = scale(normalize(SUBS),100);
+
+    drawArrow({x:0,y:0},scaled,'hsl(10, 80%, 40%)');
+
 
     /* drawArrow(A,sum(A,G),'hsl(190, 80%, 40%)');
     drawArrow(G,sum(A,G),'hsl(190, 80%, 40%)'); */
     
+  }
+
+  function scale(A, s){
+    return {
+      x: A.x * s,
+      y: A.y * s
+    }
+  }
+
+  function normalize(p){
+    return scale(p,1/magnitude(p));
   }
 
   function sum(A,B){
