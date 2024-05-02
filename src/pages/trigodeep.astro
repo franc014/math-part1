@@ -39,7 +39,7 @@ import Layout from '../layouts/Layout.astro';
   chart.height = canvas.height;
 
   let theta = Math.PI / 4;
-  const h = 100;
+  const h = 200;
 
 
 
@@ -70,15 +70,18 @@ import Layout from '../layouts/Layout.astro';
   ctxChart.translate(offset.x, offset.y);
 
   update();
-  updatePlot();
-  canvas.addEventListener('mousemove', (e) => {
-   B.x = e.x - offset.x;
-   B.y = e.y - offset.y;
-   C.x = B.x; 
+ 
 
-
-   update();
-   updatePlot();
+  canvas.addEventListener('wheel', (e) => {
+    theta -= toRad(Math.sign(e.deltaY));
+    
+    B.x = h*Math.cos(theta);
+    B.y = h*Math.sin(theta);
+    C.x = B.x;
+    
+    update();
+   
+   
   })
 
   drawCoordinateSystem(ctx);
@@ -111,7 +114,7 @@ import Layout from '../layouts/Layout.astro';
     
   }
 
-  function drawText({x, y}, label, color='black', fontSize='30px') {
+  function drawText({x, y}, label, color='black', fontSize='20px') {
     ctx.fillStyle = color;
 		ctx.textAlign = 'center';
 		ctx.textBaseline = 'middle';
@@ -130,23 +133,37 @@ import Layout from '../layouts/Layout.astro';
     const cos = Math.cos(theta);
     const tan = Math.tan(theta);
 
+    const T = {
+      x: 	Math.sign(cos) * Math.hypot(1, tan) * h,
+      y: 	0
+    }
+
    
-    const thetaDeg = Math.asin(sin) * 180 / Math.PI;
-
-
+    const thetaDeg = theta * 180 / Math.PI;
 
     ctx.clearRect(-offset.x,-offset.y,
       canvas.width,canvas.height);
     drawCoordinateSystem(ctx);
    
     drawLine(A,B,'white');
-    drawText(average(A,B),'c','white');
+    drawText(average(A,B),'1','white'); // 1 to explain the unit circle
     drawLine(A,C, cosColor);
     drawText(average(A,C),'b',cosColor);
     drawLine(C,B, sinColor);
     drawText(average(B,C),'a',sinColor);
+    drawLine(B,T, tanColor);
+    drawText(T,'tan',tanColor);
 
     drawText(A, 'Θ','white','18px');
+
+
+    //draw circle (unit circle)
+    ctx.beginPath();
+    ctx.arc(0, 0, h, 0, theta,theta < 0);
+    ctx.strokeStyle = 'hsl(90, 80%, 50%)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.closePath();
 
    
 
@@ -155,42 +172,21 @@ import Layout from '../layouts/Layout.astro';
     drawText({x: -offset.x + 200, y: offset.y-240}, `Cos(Θ): ${cos.toFixed(2)}`, cosColor,'18px');
     drawText({x: -offset.x + 200, y: offset.y-200}, `Tan(Θ): ${tan.toFixed(2)}`, tanColor,'18px');
 
-    drawText({x: offset.x-300 , y: offset.y-200}, `(Θ): ${theta.toFixed(2)} rad | ${thetaDeg.toFixed(2)} deg `, 'white','18px');
+    drawText({x: -offset.x + 200 , y: offset.y-160}, `(Θ): ${theta.toFixed(2)} rad | ${thetaDeg.toFixed(2)} deg `, 'white','18px');
 
+    updatePlot(sin,cos,tan);
 
-
-    /* drawPoint(A.x, A.y,30, 'hsl(219, 70%, 80%)');
-    drawText(A, 'A');
-
-    drawPoint(B.x, B.y,30, 'lightblue');
-    drawText(B, 'B');
-
-    drawPoint(C.x, C.y,30, 'lightgreen');
-    drawText(C, 'C'); */
   }
 
-  function updatePlot(){
-  
-    const c = distance(A,B);
-    const b = distance(A,C);
-    const a = distance(B,C);
-
-    const sin = a / c;
-    const cos = b / c;
-    const tan = a / b;
-
-    const theta = Math.asin(sin);
-
+  function updatePlot(sin,cos,tan){
     const chartScalar = 150;
     drawPoint(theta * chartScalar,sin * chartScalar,5,sinColor);
     drawPoint(theta * chartScalar,cos * chartScalar,5,cosColor); 
     drawPoint(theta * chartScalar,tan * chartScalar,5,tanColor);  
   }
 
-  function distance(p1, p2) {
-    const dx = p1.x - p2.x;
-    const dy = p1.y - p2.y;
-    return Math.hypot(dx, dy);
+  function toRad(deg) {
+    return deg * Math.PI / 180;
   }
 
   function average(p1, p2) {
