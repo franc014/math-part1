@@ -1,21 +1,48 @@
 ---
 import Layout from '../layouts/Layout.astro';
 ---
-<Layout title="Trigonometry">
+<Layout title="Trigonometry | Deep">
+  <main class="container">
     <canvas class="canvas"></canvas>
+    <canvas class="chart"></canvas>
+  </main>
 </Layout>
 
 <style>
+  .container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+  }
   .canvas {
     background-color: hsla(190, 80%, 10%);
+  }
+  .chart {
+    background-color: hsla(230, 30%, 20%);
   }
 </style>
 
 <script>
   const canvas = document.querySelector('.canvas');
+  const chart = document.querySelector('.chart');
   const ctx = canvas.getContext('2d');
-  canvas.width = window.innerWidth;
+  const ctxChart = chart.getContext('2d');
+
+  const sinColor = 'hsl(40, 90%, 60%)';
+  const cosColor = 'hsl(280, 40%, 60%)';
+  const tanColor = 'hsl(3, 50%, 60%)';
+
+  canvas.width = window.innerWidth / 2;
 	canvas.height  = window.innerHeight;
+
+  chart.width = canvas.width-20;
+  chart.height = canvas.height;
+
+  let theta = Math.PI / 4;
+  const h = 100;
+
+
+
 
   let A = {
     x: 	0,
@@ -23,8 +50,8 @@ import Layout from '../layouts/Layout.astro';
   };
 
   let B = {
-    x: 	90,
-    y: 	120
+    x: 	h*Math.cos(theta),
+    y: 	h*Math.sin(theta)
   };
 
   let C = {
@@ -40,8 +67,10 @@ import Layout from '../layouts/Layout.astro';
  
   //set canvas in the middle
   ctx.translate(offset.x, offset.y);
+  ctxChart.translate(offset.x, offset.y);
 
   update();
+  updatePlot();
   canvas.addEventListener('mousemove', (e) => {
    B.x = e.x - offset.x;
    B.y = e.y - offset.y;
@@ -49,34 +78,35 @@ import Layout from '../layouts/Layout.astro';
 
 
    update();
+   updatePlot();
   })
 
-  drawCoordinateSystem();
- 
+  drawCoordinateSystem(ctx);
+  drawCoordinateSystem(ctxChart);
 
-  function drawCoordinateSystem() {  
-    ctx.beginPath();
-    ctx.moveTo(-offset.x, 0);
-    ctx.lineTo(canvas.width - offset.x, 0);
-    ctx.moveTo(0, -offset.y);
-    ctx.lineTo(0,canvas.height - offset.y);
+  function drawCoordinateSystem(context) {  
+    context.beginPath();
+    context.moveTo(-offset.x, 0);
+    context.lineTo(canvas.width - offset.x, 0);
+    context.moveTo(0, -offset.y);
+    context.lineTo(0,canvas.height - offset.y);
     //line dash
-    ctx.setLineDash([12, 2]);
-    ctx.strokeStyle = 'hsl(190, 10%, 50%)';
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.closePath();
+    context.setLineDash([12, 2]);
+    context.strokeStyle = 'hsl(190, 10%, 50%)';
+    context.stroke();
+    context.setLineDash([]);
+    context.closePath();
    
   }
 
   function drawPoint(x, y, r=10 , color) {
     
-    ctx.beginPath();
+    ctxChart.beginPath();
     
-    ctx.fillStyle = color;
-    ctx.arc(x, y, r/2, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.closePath();
+    ctxChart.fillStyle = color;
+    ctxChart.arc(x, y, r/2, 0, 2 * Math.PI);
+    ctxChart.fill();
+    ctxChart.closePath();
     
     
   }
@@ -94,26 +124,20 @@ import Layout from '../layouts/Layout.astro';
   }
 
   function update() {
-    const c = distance(A,B);
-    const b = distance(A,C);
-    const a = distance(B,C);
+    
 
-    const sin = a / c;
-    const cos = b / c;
-    const tan = a / b;
+    const sin = Math.sin(theta);
+    const cos = Math.cos(theta);
+    const tan = Math.tan(theta);
 
-    const sinColor = 'hsl(40, 90%, 60%)';
-    const cosColor = 'hsl(280, 40%, 60%)';
-    const tanColor = 'hsl(3, 50%, 60%)';
-
-    const theta = Math.asin(sin);
+   
     const thetaDeg = Math.asin(sin) * 180 / Math.PI;
 
 
 
     ctx.clearRect(-offset.x,-offset.y,
       canvas.width,canvas.height);
-    drawCoordinateSystem();
+    drawCoordinateSystem(ctx);
    
     drawLine(A,B,'white');
     drawText(average(A,B),'c','white');
@@ -143,6 +167,24 @@ import Layout from '../layouts/Layout.astro';
 
     drawPoint(C.x, C.y,30, 'lightgreen');
     drawText(C, 'C'); */
+  }
+
+  function updatePlot(){
+  
+    const c = distance(A,B);
+    const b = distance(A,C);
+    const a = distance(B,C);
+
+    const sin = a / c;
+    const cos = b / c;
+    const tan = a / b;
+
+    const theta = Math.asin(sin);
+
+    const chartScalar = 150;
+    drawPoint(theta * chartScalar,sin * chartScalar,5,sinColor);
+    drawPoint(theta * chartScalar,cos * chartScalar,5,cosColor); 
+    drawPoint(theta * chartScalar,tan * chartScalar,5,tanColor);  
   }
 
   function distance(p1, p2) {
